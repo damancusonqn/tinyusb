@@ -38,6 +38,12 @@ void OTG_FS_IRQHandler(void)
   tud_int_handler(0);
 }
 
+void USB_IRQHandler(void)
+{
+  /*for the STM32L412 */
+  tud_int_handler(0);
+}
+
 //--------------------------------------------------------------------+
 // MACRO TYPEDEF CONSTANT ENUM
 //--------------------------------------------------------------------+
@@ -53,9 +59,12 @@ void board_init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+
+ #ifndef STM32L412xx 
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
+ #endif  
   __HAL_RCC_GPIOH_CLK_ENABLE();
   UART_CLK_EN();
 
@@ -72,7 +81,7 @@ void board_init(void)
   __HAL_RCC_PWR_CLK_ENABLE();
 
 #if defined(PWR_CR5_R1MODE)
-  /* Enable voltage range 1 boost mode for frequency above 80 Mhz */
+   //Enable voltage range 1 boost mode for frequency above 80 Mhz 
   HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST);
 #endif
 
@@ -95,7 +104,9 @@ void board_init(void)
 
   // IOSV bit MUST be set to access GPIO port G[2:15] */
   __HAL_RCC_PWR_CLK_ENABLE();
-  HAL_PWREx_EnableVddIO2();
+ #ifndef STM32L412xx 
+  HAL_PWREx_EnableVddIO2(); DM
+#endif
 
   // Uart
   GPIO_InitStruct.Pin       = UART_TX_PIN | UART_RX_PIN;
@@ -123,11 +134,15 @@ void board_init(void)
   GPIO_InitStruct.Pin = (GPIO_PIN_11 | GPIO_PIN_12);
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
+  //GPIO_InitStruct.Speed = GPIO_SPEED_HIGH; //DM
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  //GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS; //DM
+  GPIO_InitStruct.Alternate = GPIO_AF10_USB_FS; //DM
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* Configure VBUS Pin */
+  // STM32L412xx PHY doesn't provide VBUS detection and ID pins (no OTG)
+ #ifndef STM32L412xx 
   GPIO_InitStruct.Pin = GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -137,13 +152,24 @@ void board_init(void)
   GPIO_InitStruct.Pin = GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
+  //GPIO_AF10_USB_FS
+  GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS; //DM
+  GPIO_InitStruct.Alternate = GPIO_AF10_USB_FS;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+ #endif
+    /* Peripheral interrupt init */
+    HAL_NVIC_SetPriority(USB_IRQn, 15, 0);
+    // HAL_NVIC_EnableIRQ(USB_IRQn);
+
 
   /* Enable USB FS Clocks */
-  __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
-
+ #ifdef STM32L412xx      
+  __HAL_RCC_USB_CLK_ENABLE();
+#else
   board_vbus_sense_init();
+  __HAL_RCC_USB_OTG_FS_CLK_ENABLE(); //DM
+#endif
+
 }
 
 //--------------------------------------------------------------------+

@@ -19,9 +19,12 @@ CFLAGS += \
 # suppress warning caused by vendor mcu driver
 CFLAGS += -Wno-error=maybe-uninitialized -Wno-error=cast-align
 
+
+#for devices with the Synopsys PHY (STM32L47xx, L4x5xx)
 #src/portable/st/synopsys/dcd_synopsys.c
+
 SRC_C += \
-	src/portable/synopsys/dwc2/dcd_dwc2.c \
+	src/portable/st/stm32_fsdev/dcd_stm32_fsdev.c \
 	$(ST_CMSIS)/Source/Templates/system_stm32$(ST_FAMILY)xx.c \
 	$(ST_HAL_DRIVER)/Src/stm32$(ST_FAMILY)xx_hal.c \
 	$(ST_HAL_DRIVER)/Src/stm32$(ST_FAMILY)xx_hal_cortex.c \
@@ -43,3 +46,8 @@ FREERTOS_PORT = ARM_CM4F
 
 # flash target using on-board stlink
 flash: flash-stlink
+
+
+# flash target ROM bootloader
+flash-dfu-util: $(BUILD)/$(PROJECT).bin
+	dfu-util -R -a 0 --dfuse-address 0x08000000 -D $<

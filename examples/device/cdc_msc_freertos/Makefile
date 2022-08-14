@@ -12,6 +12,12 @@ INC += \
 	$(TOP)/$(FREERTOS_SRC)/include \
 	$(TOP)/$(FREERTOS_SRC)/portable/GCC/$(FREERTOS_PORT)
 	
+
+#NOTE>>> DM >>>>> The Template for the init assembly source (startup_stm32l412xx.s) is missing the USB handler
+# 	.weak      USB_IRQHandler
+#  	.thumb_set USB_IRQHandler,Default_Handler
+# if this is not in place we don't get the USB IRQ
+
 # Example source
 EXAMPLE_SOURCE = \
 	src/freertos_hook.c \

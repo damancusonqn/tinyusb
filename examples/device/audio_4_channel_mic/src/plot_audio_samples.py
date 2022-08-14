@@ -16,11 +16,11 @@ if __name__ == '__main__':
         # WDM-KS is needed since there are more than one MicNode device APIs (at least in Windows)
         device = 'Microphone (MicNode_4_Ch), Windows WDM-KS'
     elif platform.system() == 'Darwin':
-        device = 'MicNode_4_Ch'
+        device = 'MacBook Pro Microphone'
     else:
         device ='default'
 
-    myrecording = sd.rec(int(duration * fs), samplerate=fs, channels=4, dtype='int16', device=device)
+    myrecording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16', device=device)
     print('Waiting...')
     sd.wait()  # Wait until recording is finished
     print('Done!')
